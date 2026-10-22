@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mini Militia - Web Clone (Doodle Combat)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Master Game Canvas -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Minimap Tactical Radar -->
+  <div id="minimapContainer">
+    <canvas id="minimapCanvas" width="180" height="105"></canvas>
+  </div>
+
+  <!-- In-Game HUD Action Buttons -->
+  <button id="hudCopyRoomBtn" class="hud-btn">📋 COPY ROOM LINK</button>
+  <button id="hudAudioBtn" class="hud-btn">🔊 SFX: ON</button>
+
+  <!-- Start Menu / Lobby Overlay -->
+  <div id="menuOverlay">
+    <div class="menu-card">
+      <h1 class="menu-title">Mini Militia</h1>
+      <div class="menu-subtitle">Multiplayer Doodle Combat</div>
+
+      <!-- Player Profile & Camo Customization -->
+      <div class="profile-section">
+        <div class="profile-field" style="flex: 1.2;">
+          <label>Soldier Nickname</label>
+          <input type="text" id="playerNameInput" class="text-input" value="Sgt. Doodle" maxlength="15">
+        </div>
+        <div class="profile-field">
+          <label>Camo Skin</label>
+          <div class="camo-picker" id="camoPicker">
+            <div class="camo-dot selected" data-color="#3f5938" style="background: #3f5938;" title="Olive Green"></div>
+            <div class="camo-dot" data-color="#8c7853" style="background: #8c7853;" title="Desert Tan"></div>
+            <div class="camo-dot" data-color="#4a5568" style="background: #4a5568;" title="Urban Grey"></div>
+            <div class="camo-dot" data-color="#7d3838" style="background: #7d3838;" title="Rebel Crimson"></div>
+            <div class="camo-dot" data-color="#2b4c7e" style="background: #2b4c7e;" title="Navy Commando"></div>
+            <div class="camo-dot" data-color="#557a2b" style="background: #557a2b;" title="Toxic Lime"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mode Selector Tabs -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" data-tab="tabSingle">🎮 Single Player</button>
+        <button class="tab-btn" data-tab="tabCreate">⚡ Create Room</button>
+        <button class="tab-btn" data-tab="tabJoin">🔗 Join Room</button>
+      </div>
+
+      <!-- Tab 1: Single Player -->
+      <div class="tab-panel active" id="tabSingle">
+        <div class="form-group">
+          <label class="toggle-item">
+            <input type="checkbox" id="singleUnlimitedBoost">
+            <span>Enable <span class="badge-unlimited">⚡ Unlimited Boost / Infinite Nitro</span></span>
+          </label>
+        </div>
+        <button id="btnDeploySingle" class="play-btn">DEPLOY TO COMBAT</button>
+      </div>
+
+      <!-- Tab 2: Create Custom Room (Host Settings) -->
+      <div class="tab-panel" id="tabCreate">
+        <div class="form-group">
+          <label>Room Code / Name</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="createRoomCodeInput" class="text-input" style="flex: 1; text-transform: uppercase;" placeholder="e.g. ALPHA">
+            <button id="btnRandomCode" class="hud-btn" style="position: static; padding: 8px 12px;">🎲 RANDOM</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Match Duration</label>
+          <select id="matchDurationSelect" class="select-input">
+            <option value="10" selected>10 Minutes Gameplay</option>
+            <option value="20">20 Minutes Gameplay</option>
+            <option value="30">30 Minutes Gameplay</option>
+            <option value="5">5 Minutes (Quick Action)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="toggle-item">
+            <input type="checkbox" id="createUnlimitedBoost">
+            <span>Room Owner Choice: <span class="badge-unlimited">⚡ Unlimited Boost (Infinite Flight)</span></span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="toggle-item">
+            <input type="checkbox" id="createEnableBots" checked>
+            <span>Fill empty slots with Tactical AI Bots</span>
+          </label>
+        </div>
+
+        <button id="btnDeployCreate" class="play-btn">CREATE ROOM & DEPLOY</button>
+      </div>
+
+      <!-- Tab 3: Join Room -->
+      <div class="tab-panel" id="tabJoin">
+        <div class="form-group">
+          <label>Enter Room Code</label>
+          <input type="text" id="joinRoomCodeInput" class="text-input" style="width: 100%; text-transform: uppercase;" placeholder="Enter room code...">
+        </div>
+        <button id="btnDeployJoin" class="play-btn secondary">JOIN MATCH & DEPLOY</button>
+      </div>
+
+      <div class="footer-note">
+        Controls: [WASD/Space] Jetpack & Move • [Mouse/Touch] 360° Aim & Shoot • [G] Grenade • [R] Reload • [Q] Swap
+      </div>
+    </div>
+  </div>
+
+  <!-- Match Over / Winner Leaderboard Modal -->
+  <div id="gameOverModal">
+    <div class="gameover-card">
+      <h2 class="gameover-title">MATCH COMPLETED!</h2>
+      <div id="goWinnerName" class="gameover-mvp">🏆 MVP: Player</div>
+
+      <div class="leaderboard-list" id="goLeaderboardList">
+        <!-- Injected via game.js -->
+      </div>
+
+      <div class="modal-actions">
+        <button id="goRematchBtn" class="play-btn" style="display: none;">RESTART ROUND</button>
+        <button id="goLobbyBtn" class="play-btn secondary">RETURN TO LOBBY</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/weapons.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/entities.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/multiplayer.js"></script>
+  <script src="js/game.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const game = new MiniMilitiaGame();
+
+      // UI Element references
+      const menuOverlay = document.getElementById('menuOverlay');
+      const nameInput = document.getElementById('playerNameInput');
+      const camoDots = document.querySelectorAll('.camo-dot');
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      const tabPanels = document.querySelectorAll('.tab-panel');
+
+      const btnDeploySingle = document.getElementById('btnDeploySingle');
+      const singleUnlimitedBoost = document.getElementById('singleUnlimitedBoost');
+
+      const btnDeployCreate = document.getElementById('btnDeployCreate');
+      const createRoomCodeInput = document.getElementById('createRoomCodeInput');
+      const matchDurationSelect = document.getElementById('matchDurationSelect');
+      const createUnlimitedBoost = document.getElementById('createUnlimitedBoost');
+      const createEnableBots = document.getElementById('createEnableBots');
+      const btnRandomCode = document.getElementById('btnRandomCode');
+
+      const btnDeployJoin = document.getElementById('btnDeployJoin');
+      const joinRoomCodeInput = document.getElementById('joinRoomCodeInput');
+
+      const hudCopyRoomBtn = document.getElementById('hudCopyRoomBtn');
+      const hudAudioBtn = document.getElementById('hudAudioBtn');
+      const goLobbyBtn = document.getElementById('goLobbyBtn');
+
+      let selectedCamo = '#3f5938';
+
+      // Load saved name
+      const savedName = localStorage.getItem('mm_player_name');
+      if (savedName) nameInput.value = savedName;
+
+      nameInput.addEventListener('change', () => {
+        localStorage.setItem('mm_player_name', nameInput.value.trim());
+      });
+
+      // Random room code generator helper
+      const generateRandomCode = () => {
+        const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < 5; i++) {
+          code += letters.charAt(Math.floor(Math.random() * letters.length));
+        }
+        return code;
+      };
+
+      createRoomCodeInput.value = generateRandomCode();
+      btnRandomCode.addEventListener('click', () => {
+        createRoomCodeInput.value = generateRandomCode();
+      });
+
+      // Auto-fill join room from URL query param `?room=CODE`
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlRoom = urlParams.get('room');
+      if (urlRoom) {
+        joinRoomCodeInput.value = urlRoom.toUpperCase();
+        // Activate Join tab
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabPanels.forEach(p => p.classList.remove('active'));
+        const joinBtn = document.querySelector('[data-tab="tabJoin"]');
+        if (joinBtn) joinBtn.classList.add('active');
+        const joinPanel = document.getElementById('tabJoin');
+        if (joinPanel) joinPanel.classList.add('active');
+      }
+
+      // Camo selector
+      camoDots.forEach(dot => {
+        dot.addEventListener('click', () => {
+          camoDots.forEach(d => d.classList.remove('selected'));
+          dot.classList.add('selected');
+          selectedCamo = dot.dataset.color;
+        });
+      });
+
+      // Tab navigation
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabBtns.forEach(b => b.classList.remove('active'));
+          tabPanels.forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          const panel = document.getElementById(btn.dataset.tab);
+          if (panel) panel.classList.add('active');
+        });
+      });
+
+      // Audio Toggle
+      hudAudioBtn.addEventListener('click', () => {
+        const isMuted = window.soundEngine.toggleMute();
+        hudAudioBtn.innerText = isMuted ? '🔇 SFX: OFF' : '🔊 SFX: ON';
+      });
+
+      // Copy Room Invite Link
+      hudCopyRoomBtn.addEventListener('click', () => {
+        if (!game.multiplayer || !game.multiplayer.roomSettings) return;
+        const code = game.multiplayer.roomSettings.roomCode;
+        const link = `${window.location.origin}${window.location.pathname}?room=${code}`;
+        navigator.clipboard.writeText(link).then(() => {
+          hudCopyRoomBtn.innerText = '✅ LINK COPIED!';
+          setTimeout(() => {
+            hudCopyRoomBtn.innerText = '📋 COPY ROOM LINK';
+          }, 2000);
+        });
+      });
+
+      // 1. Single Player Start
+      btnDeploySingle.addEventListener('click', () => {
+        const playerName = nameInput.value.trim() || 'Player';
+        menuOverlay.style.display = 'none';
+        hudCopyRoomBtn.style.display = 'none';
+        game.startSinglePlayer({
+          playerName: playerName,
+          camoColor: selectedCamo,
+          unlimitedBoost: singleUnlimitedBoost.checked
+        });
+      });
+
+      // 2. Create Multiplayer Room
+      btnDeployCreate.addEventListener('click', () => {
+        const playerName = nameInput.value.trim() || 'Host';
+        const roomCode = createRoomCodeInput.value.trim() || generateRandomCode();
+        const duration = parseInt(matchDurationSelect.value, 10) || 10;
+        const unlimitedBoost = createUnlimitedBoost.checked;
+        const enableBots = createEnableBots.checked;
+
+        btnDeployCreate.innerText = 'CREATING ROOM...';
+        btnDeployCreate.disabled = true;
+
+        game.multiplayer.createRoom({
+          roomCode: roomCode,
+          durationMinutes: duration,
+          unlimitedBoost: unlimitedBoost,
+          enableBots: enableBots,
+          playerName: playerName,
+          camoColor: selectedCamo
+        }, (success, data) => {
+          btnDeployCreate.innerText = 'CREATE ROOM & DEPLOY';
+          btnDeployCreate.disabled = false;
+
+          if (success) {
+            menuOverlay.style.display = 'none';
+            hudCopyRoomBtn.style.display = 'block';
+            game.startMultiplayer(data, { name: playerName, camoColor: selectedCamo });
+          } else {
+            alert(data || 'Failed to connect to server.');
+          }
+        });
+      });
+
+      // 3. Join Multiplayer Room
+      btnDeployJoin.addEventListener('click', () => {
+        const playerName = nameInput.value.trim() || 'Player';
+        const roomCode = joinRoomCodeInput.value.trim().toUpperCase();
+
+        if (!roomCode) {
+          alert('Please enter a Room Code to join!');
+          return;
+        }
+
+        btnDeployJoin.innerText = 'JOINING ROOM...';
+        btnDeployJoin.disabled = true;
+
+        game.multiplayer.joinRoom({
+          roomCode: roomCode,
+          playerName: playerName,
+          camoColor: selectedCamo
+        }, (success, data) => {
+          btnDeployJoin.innerText = 'JOIN MATCH & DEPLOY';
+          btnDeployJoin.disabled = false;
+
+          if (success) {
+            menuOverlay.style.display = 'none';
+            hudCopyRoomBtn.style.display = 'block';
+            game.startMultiplayer(data, { name: playerName, camoColor: selectedCamo });
+          }
+        });
+      });
+
+      // Return to Lobby
+      goLobbyBtn.addEventListener('click', () => {
+        window.location.reload();
+      });
+    });
+  </script>
+</body>
+</html>

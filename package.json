@@ -1,0 +1,20 @@
+{
+  "name": "mini-militia-clone",
+  "version": "1.0.0",
+  "description": "Mini Militia (Doodle Army 2) Web Game Clone with Physics, Jetpack Flight, Weapons, Bot AI, and Multiplayer Server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "mini-militia",
+    "doodle-army",
+    "game",
+    "canvas",
+    "physics",
+    "multiplayer",
+    "websocket"
+  ],
+  "author": "Antigravity & Divya",
+  "license": "MIT"
+}
